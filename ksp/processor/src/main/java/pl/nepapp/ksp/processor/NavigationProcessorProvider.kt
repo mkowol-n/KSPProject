@@ -15,6 +15,7 @@ import com.squareup.kotlinpoet.FunSpec
 import com.squareup.kotlinpoet.MemberName
 import com.squareup.kotlinpoet.NOTHING
 import com.squareup.kotlinpoet.ParameterSpec
+import com.squareup.kotlinpoet.asTypeName
 import com.squareup.kotlinpoet.ksp.toClassName
 import com.squareup.kotlinpoet.ksp.writeTo
 import pl.nepapp.ksp.annotations.Screen
@@ -68,7 +69,7 @@ class NavigationProcessorProcessor(
             .addCode(") {\n")
 
         symbols.forEach { symbol ->
-            val annotation = symbol.annotations.first { it.shortName.asString() == "Screen" }
+            val annotation = symbol.annotations.first { it.annotationType.resolve().toClassName() == Screen::class.asTypeName() }
             val direction = annotation.arguments.first().value as KSType
             val directionName = direction.toClassName().canonicalName
 
