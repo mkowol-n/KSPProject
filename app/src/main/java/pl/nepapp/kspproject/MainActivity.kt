@@ -21,7 +21,7 @@ class MainActivity : ComponentActivity() {
             KSPProjectTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     Box(modifier = Modifier.padding(innerPadding)) {
-                        NavigationGraph(initialScreen = FirstScreenDirection())
+                        NavigationGraph(initialScreen = FirstScreenDirection)
                     }
                 }
             }

@@ -13,17 +13,13 @@ import pl.nepapp.ksp.annotations.ScreenRegistry
 import kotlin.reflect.KType
 
 @Serializable
-class FirstScreenDirection: Direction {
-    companion object: DirectionTypeMapCompanion {
-        override val typeMap: Map<KType, NavType<Any>> = emptyMap()
-    }
-}
+data object FirstScreenDirection: Direction
 
 @ScreenRegistry(FirstScreenDirection::class)
 @Composable
 fun FirstContent() {
     val navigator = LocalNavigator.current
     Box(modifier = Modifier.clickable {
-        navigator?.push(SecondScreenDirection)
+        navigator?.push(SecondScreenDirection())
     }.background(Color.Gray).fillMaxSize()) {}
 }
