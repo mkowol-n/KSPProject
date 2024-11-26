@@ -33,6 +33,7 @@ class NavigationProcessorProcessor(
     private val composableAnnotationClassName = ClassName("androidx.compose.runtime", "Composable")
     private val rememberNavControllerMemberName = MemberName("androidx.navigation.compose", "rememberNavController")
     private val navHostControllerClassName = ClassName("androidx.navigation", "NavHostController")
+    private val composableMember = MemberName("androidx.navigation.compose", "composable")
 
     private val directionClassName = ClassName("pl.nepapp.kspproject", "Direction")  // Tu wrzucasz package swojego direction interface
     private val baseNavHostClassName = ClassName("pl.nepapp.kspproject", "BaseNavHost")  // Tu wrzucasz package BaseNavHosta
@@ -71,15 +72,13 @@ class NavigationProcessorProcessor(
             val annotation = symbol.annotations.first {
                 it.annotationType.resolve().toClassName() == Screen::class.asTypeName()
             }
-           // val direction = annotation.arguments.first { it.value as KSType == directionClassName::class }.value as KSType
-            val direction = annotation.arguments.first().value as KSType
-            val directionName = direction.toClassName().canonicalName
+            val direction = annotation.arguments.first { it.name?.getShortName() == Screen::direction.name }.value as KSType
 
-            funSpecBuilder.addCode(
-                "%T<$directionName> {\n",
-                ClassName("androidx.navigation.compose", "composable")
-            )
-            funSpecBuilder.addCode("${symbol.qualifiedName!!.asString()}()\n")
+            val directionName = direction.toClassName().canonicalName
+            val screenName = requireNotNull(symbol.qualifiedName).asString()
+
+            funSpecBuilder.addCode("%M<$directionName> {\n", composableMember)
+            funSpecBuilder.addCode("$screenName()\n")
             funSpecBuilder.addCode("}\n")
         }
 
