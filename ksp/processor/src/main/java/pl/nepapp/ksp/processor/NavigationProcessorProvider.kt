@@ -36,24 +36,15 @@ class NavigationProcessorProcessor(
     private val codeGenerator: CodeGenerator,
 ) : SymbolProcessor {
     private val composableAnnotationClassName = ClassName("androidx.compose.runtime", "Composable")
-    private val rememberNavControllerMemberName =
-        MemberName("androidx.navigation.compose", "rememberNavController")
+    private val rememberNavControllerMemberName = MemberName("androidx.navigation.compose", "rememberNavController")
     private val navHostControllerClassName = ClassName("androidx.navigation", "NavHostController")
 
-    private val directionClassName = ClassName(
-        "pl.nepapp.kspproject",
-        "Direction"
-    )  // Tu wrzucasz package swojego direction interface
-    private val baseNavHostClassName =
-        ClassName("pl.nepapp.kspproject", "BaseNavHost")  // Tu wrzucasz package BaseNavHosta
-    private val baseComposableRegistrator = MemberName(
-        "pl.nepapp.kspproject",
-        "registerBaseComposable"
-    )  // Tu wrzucasz i name swojej głównej nawigacji compose
-    private val directionTypeMapCompanionClassName =
-        ClassName("pl.nepapp.kspproject", "DirectionTypeMapCompanion")
-    private val generatedModulePackageName = "pl.nepapp.kspproject"
-    private val nameOfNavigationComposable = "GeneratedNavHost"
+    private val directionClassName = ClassName("pl.nepapp.kspproject", "Direction")  // Tu wrzucasz package swojego direction interface
+    private val baseNavHostClassName = ClassName("pl.nepapp.kspproject", "BaseNavHost")  // Tu wrzucasz package BaseNavHosta
+    private val baseComposableRegistrator = MemberName("pl.nepapp.kspproject", "registerBaseComposable")  // Tu wrzucasz i name swojej głównej nawigacji compose
+    private val directionTypeMapCompanionClassName = ClassName("pl.nepapp.kspproject", "DirectionTypeMapCompanion") // Tu wrzucasz to co mam w direction jaok DirectionTypeMapCompanion
+    private val generatedModulePackageName = "pl.nepapp.kspproject" // twój app module package name
+    private val nameOfNavigationComposable = "GeneratedNavHost" // to jak ma sie nazywac wygenerowany plik
 
     override fun process(resolver: Resolver): List<KSAnnotated> {
         val symbols = resolver.getSymbolsWithAnnotation(ScreenRegistry::class.qualifiedName!!)
