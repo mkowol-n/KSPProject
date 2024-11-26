@@ -33,10 +33,10 @@ class NavigationProcessorProcessor(
     private val composableAnnotationClassName = ClassName("androidx.compose.runtime", "Composable")
     private val rememberNavControllerMemberName = MemberName("androidx.navigation.compose", "rememberNavController")
     private val navHostControllerClassName = ClassName("androidx.navigation", "NavHostController")
-    private val composableMember = MemberName("androidx.navigation.compose", "composable")
 
     private val directionClassName = ClassName("pl.nepapp.kspproject", "Direction")  // Tu wrzucasz package swojego direction interface
     private val baseNavHostClassName = ClassName("pl.nepapp.kspproject", "BaseNavHost")  // Tu wrzucasz package BaseNavHosta
+    private val baseComposableRegistrator = MemberName("pl.nepapp.kspproject", "registerBaseComposable")  // Tu wrzucasz i name swojej głównej nawigacji compose
 
     override fun process(resolver: Resolver): List<KSAnnotated> {
         val symbols = resolver.getSymbolsWithAnnotation(Screen::class.qualifiedName!!)
@@ -77,7 +77,7 @@ class NavigationProcessorProcessor(
             val directionName = direction.toClassName().canonicalName
             val screenName = requireNotNull(symbol.qualifiedName).asString()
 
-            funSpecBuilder.addCode("%M<$directionName> {\n", composableMember)
+            funSpecBuilder.addCode("%M<$directionName> {\n", baseComposableRegistrator)
             funSpecBuilder.addCode("$screenName()\n")
             funSpecBuilder.addCode("}\n")
         }
