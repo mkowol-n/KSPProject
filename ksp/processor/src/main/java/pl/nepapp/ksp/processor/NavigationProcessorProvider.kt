@@ -13,7 +13,6 @@ import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.FunSpec
 import com.squareup.kotlinpoet.MemberName
-import com.squareup.kotlinpoet.NOTHING
 import com.squareup.kotlinpoet.ParameterSpec
 import com.squareup.kotlinpoet.asTypeName
 import com.squareup.kotlinpoet.ksp.toClassName
@@ -36,7 +35,7 @@ class NavigationProcessorProcessor(
     private val navHostControllerClassName = ClassName("androidx.navigation", "NavHostController")
 
     private val directionClassName = ClassName("pl.nepapp.kspproject", "Direction")  // Tu wrzucasz package swojego direction interface
-    private val baseNavHostClassName =  ClassName("pl.nepapp.kspproject", "BaseNavHost")  // Tu wrzucasz package BaseNavHosta
+    private val baseNavHostClassName = ClassName("pl.nepapp.kspproject", "BaseNavHost")  // Tu wrzucasz package BaseNavHosta
 
     override fun process(resolver: Resolver): List<KSAnnotated> {
         val symbols = resolver.getSymbolsWithAnnotation(Screen::class.qualifiedName!!)
@@ -69,7 +68,10 @@ class NavigationProcessorProcessor(
             .addCode(") {\n")
 
         symbols.forEach { symbol ->
-            val annotation = symbol.annotations.first { it.annotationType.resolve().toClassName() == Screen::class.asTypeName() }
+            val annotation = symbol.annotations.first {
+                it.annotationType.resolve().toClassName() == Screen::class.asTypeName()
+            }
+           // val direction = annotation.arguments.first { it.value as KSType == directionClassName::class }.value as KSType
             val direction = annotation.arguments.first().value as KSType
             val directionName = direction.toClassName().canonicalName
 
