@@ -14,10 +14,8 @@ import kotlin.reflect.KType
 
 @Serializable
 class FirstScreenDirection: Direction {
-    override val typeMap: Map<KType, NavType<Any>> get() = navTypeMap
-
-    companion object {
-        private val navTypeMap: Map<KType, NavType<Any>> = mapOf()
+    companion object: DirectionTypeMapCompanion {
+        override val typeMap: Map<KType, NavType<Any>> = emptyMap()
     }
 }
 
