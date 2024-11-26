@@ -9,6 +9,7 @@ import com.google.devtools.ksp.processing.SymbolProcessorEnvironment
 import com.google.devtools.ksp.processing.SymbolProcessorProvider
 import com.google.devtools.ksp.symbol.ClassKind
 import com.google.devtools.ksp.symbol.KSAnnotated
+import com.google.devtools.ksp.symbol.KSAnnotation
 import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.devtools.ksp.symbol.KSFunctionDeclaration
 import com.google.devtools.ksp.symbol.KSType
@@ -17,10 +18,14 @@ import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.FunSpec
 import com.squareup.kotlinpoet.MemberName
 import com.squareup.kotlinpoet.ParameterSpec
+import com.squareup.kotlinpoet.asClassName
 import com.squareup.kotlinpoet.asTypeName
 import com.squareup.kotlinpoet.ksp.toClassName
+import com.squareup.kotlinpoet.ksp.toTypeName
 import com.squareup.kotlinpoet.ksp.writeTo
 import pl.nepapp.ksp.annotations.ScreenRegistry
+import kotlin.reflect.KClass
+import kotlin.reflect.typeOf
 
 class NavigationProcessorProvider : SymbolProcessorProvider {
     override fun create(environment: SymbolProcessorEnvironment): SymbolProcessor {
@@ -43,7 +48,6 @@ class NavigationProcessorProcessor(
     private val directionTypeMapCompanionClassName = ClassName("pl.nepapp.kspproject", "DirectionTypeMapCompanion") // Tu wrzucasz to co mam w direction jaok DirectionTypeMapCompanion
     private val generatedModulePackageName = "pl.nepapp.kspproject" // twój app module package name
     private val nameOfNavigationComposable = "GeneratedNavHost" // to jak ma sie nazywac wygenerowany plik
-    private val typeMapName = "typeMap"
 
     override fun process(resolver: Resolver): List<KSAnnotated> {
         val symbols = resolver.getSymbolsWithAnnotation(ScreenRegistry::class.qualifiedName!!)
@@ -87,7 +91,10 @@ class NavigationProcessorProcessor(
             val directionName = direction.toClassName().canonicalName
             val screenName = requireNotNull(symbol.qualifiedName).asString()
 
-            funSpecBuilder.addCode("%M<$directionName>", baseComposableRegistrator)
+            funSpecBuilder.buildScreenRegistry(
+                annotation = annotation,
+                directionName = directionName
+            )
 
             funSpecBuilder.addNavTypesIfNeeded(
                 direction = direction,
@@ -104,14 +111,21 @@ class NavigationProcessorProcessor(
         return funSpecBuilder.build()
     }
 
-    private fun FunSpec.Builder.addNavTypesIfNeeded(direction: KSType, directionName: String): FunSpec.Builder {
+    private fun FunSpec.Builder.addNavTypesIfNeeded(
+        direction: KSType,
+        directionName: String
+    ): FunSpec.Builder {
 
-        val direcionCompanionObject = (direction.declaration as KSClassDeclaration).declarations.filterIsInstance<KSClassDeclaration>().firstOrNull { it.isCompanionObject }
-        if(direcionCompanionObject == null) {
+        val direcionCompanionObject =
+            (direction.declaration as KSClassDeclaration).declarations.filterIsInstance<KSClassDeclaration>()
+                .firstOrNull { it.isCompanionObject }
+        if (direcionCompanionObject == null) {
             return this
         }
 
-        if (direcionCompanionObject.superTypes.none { it.resolve().toClassName() == directionTypeMapCompanionClassName }) {
+        if (direcionCompanionObject.superTypes.none {
+                it.resolve().toClassName() == directionTypeMapCompanionClassName
+            }) {
             throw Exception("Companion object of $directionName must be type of ${directionTypeMapCompanionClassName.canonicalName}")
         }
 
@@ -119,6 +133,35 @@ class NavigationProcessorProcessor(
 
         this.addCode("(typeMap = ${directionName}.$typeMapName )")
 
+        return this
+    }
+
+    private fun FunSpec.Builder.buildScreenRegistry(
+        annotation: KSAnnotation,
+        directionName: String
+    ): FunSpec.Builder {
+        val screenRegistry =
+            annotation.arguments.first { it.name?.getShortName() == ScreenRegistry::animation.name }.value
+
+        if(screenRegistry !is ArrayList<*>) {
+
+            throw Exception("Missed type of animation in ${ScreenRegistry::class.qualifiedName}")
+        }
+        if (screenRegistry.isEmpty()) {
+            this.addCode("%M<$directionName>", baseComposableRegistrator)
+            return this
+        }
+
+        if(screenRegistry.size > 1) {
+            throw Exception("Only one custom animation allowed")
+        }
+
+        val ksType = (screenRegistry.first() as KSType)
+        val classDeclaration = ksType.declaration as KSClassDeclaration
+
+        val memberName = MemberName(ksType.toClassName(), classDeclaration.getAllFunctions().first().simpleName.getShortName())
+
+        this.addCode("%M<$directionName>", memberName)
         return this
     }
 }

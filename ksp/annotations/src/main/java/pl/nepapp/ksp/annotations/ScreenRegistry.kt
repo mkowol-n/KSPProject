@@ -5,4 +5,4 @@ import kotlin.reflect.KClass
 
 @Target(AnnotationTarget.FUNCTION)
 @Retention(AnnotationRetention.SOURCE)
-annotation class ScreenRegistry(val direction: KClass<out Any>)
+annotation class ScreenRegistry(val direction: KClass<out Any>, val animation: Array<KClass<out Any>> = [])

@@ -16,7 +16,7 @@ data object SecondScreenDirection: Direction {
     val typeMap: Map<KType, NavType<Any>> = emptyMap()
 }
 
-@ScreenRegistry(SecondScreenDirection::class)
+@ScreenRegistry(SecondScreenDirection::class, animation = [SomeCustomAnimation::class])
 @Composable
 fun SecondScreen() {
     Box(modifier = Modifier.background(Color.Red).fillMaxSize())
