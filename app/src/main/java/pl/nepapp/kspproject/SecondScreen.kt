@@ -10,14 +10,30 @@ import androidx.navigation.NavType
 import kotlinx.serialization.Serializable
 import pl.nepapp.ksp.annotations.ScreenRegistry
 import kotlin.reflect.KType
+import kotlin.reflect.typeOf
 
 @Serializable
-data object SecondScreenDirection: Direction {
-    val typeMap: Map<KType, NavType<Any>> = emptyMap()
+data class SomeClass(
+    val someString: String
+)
+
+@Serializable
+data class SecondScreenDirection(
+    val test: SomeClass
+) : Direction {
+
+    companion object : DirectionTypeMapCompanion {
+        override val typeMap: Map<KType, NavType<out Any>> =
+            mapOf(typeOf<SomeClass>() to serializableType<SomeClass>())
+    }
 }
 
 @ScreenRegistry(SecondScreenDirection::class, animation = [SomeCustomAnimation::class])
 @Composable
 fun SecondScreen() {
-    Box(modifier = Modifier.background(Color.Red).fillMaxSize())
+    Box(
+        modifier = Modifier
+            .background(Color.Red)
+            .fillMaxSize()
+    )
 }

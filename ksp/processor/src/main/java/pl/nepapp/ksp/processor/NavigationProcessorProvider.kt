@@ -123,7 +123,7 @@ class NavigationProcessorProcessor(
             return this
         }
 
-        if (direcionCompanionObject.superTypes.none {
+        if (direcionCompanionObject!!.superTypes.none {
                 it.resolve().toClassName() == directionTypeMapCompanionClassName
             }) {
             throw Exception("Companion object of $directionName must be type of ${directionTypeMapCompanionClassName.canonicalName}")

@@ -6,5 +6,5 @@ import kotlin.reflect.KType
 interface Direction
 
 interface DirectionTypeMapCompanion {
-    val typeMap: Map<KType, NavType<Any>>
+    val typeMap: Map<KType, NavType<out Any>>
 }
