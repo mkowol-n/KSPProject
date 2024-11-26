@@ -6,13 +6,18 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.navigation.NavType
 import kotlinx.serialization.Serializable
-import pl.nepapp.ksp.annotations.Screen
+import pl.nepapp.ksp.annotations.ScreenRegistry
+import kotlin.reflect.KType
 
 @Serializable
-object SecondScreenDirection: Direction
+object SecondScreenDirection: Direction {
+    override val typeMap: Map<KType, NavType<Any>>?
+        get() = null
+}
 
-@Screen(SecondScreenDirection::class)
+@ScreenRegistry(SecondScreenDirection::class)
 @Composable
 fun SecondScreen() {
     Box(modifier = Modifier.background(Color.Red).fillMaxSize())

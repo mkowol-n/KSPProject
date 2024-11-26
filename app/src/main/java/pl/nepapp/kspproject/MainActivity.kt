@@ -12,7 +12,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import com.example.generated.NavigationGraph
 import pl.nepapp.kspproject.ui.theme.KSPProjectTheme
 
 class MainActivity : ComponentActivity() {
@@ -22,7 +21,7 @@ class MainActivity : ComponentActivity() {
             KSPProjectTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     Box(modifier = Modifier.padding(innerPadding)) {
-                        NavigationGraph(initialScreen = FirstScreenDirection)
+                        NavigationGraph(initialScreen = FirstScreenDirection())
                     }
                 }
             }

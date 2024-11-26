@@ -17,7 +17,7 @@ import com.squareup.kotlinpoet.ParameterSpec
 import com.squareup.kotlinpoet.asTypeName
 import com.squareup.kotlinpoet.ksp.toClassName
 import com.squareup.kotlinpoet.ksp.writeTo
-import pl.nepapp.ksp.annotations.Screen
+import pl.nepapp.ksp.annotations.ScreenRegistry
 
 class NavigationProcessorProvider : SymbolProcessorProvider {
     override fun create(environment: SymbolProcessorEnvironment): SymbolProcessor {
@@ -37,14 +37,17 @@ class NavigationProcessorProcessor(
     private val directionClassName = ClassName("pl.nepapp.kspproject", "Direction")  // Tu wrzucasz package swojego direction interface
     private val baseNavHostClassName = ClassName("pl.nepapp.kspproject", "BaseNavHost")  // Tu wrzucasz package BaseNavHosta
     private val baseComposableRegistrator = MemberName("pl.nepapp.kspproject", "registerBaseComposable")  // Tu wrzucasz i name swojej głównej nawigacji compose
+    private val generatedModulePackageName = "pl.nepapp.kspproject"
+    private val nameOfNavigationComposable = "GeneratedNavHost"
 
     override fun process(resolver: Resolver): List<KSAnnotated> {
-        val symbols = resolver.getSymbolsWithAnnotation(Screen::class.qualifiedName!!)
+        val symbols = resolver.getSymbolsWithAnnotation(ScreenRegistry::class.qualifiedName!!)
             .filterIsInstance<KSFunctionDeclaration>()
 
         if (!symbols.iterator().hasNext()) return emptyList()
 
-        val fileSpecBuilder = FileSpec.builder("com.example.generated", "GeneratedNavHost")
+        resolver.getAllFiles().first().packageName
+        val fileSpecBuilder = FileSpec.builder(generatedModulePackageName, nameOfNavigationComposable)
 
         fileSpecBuilder.addFunction(generateNavHostFunction(symbols))
 
@@ -70,9 +73,9 @@ class NavigationProcessorProcessor(
 
         symbols.forEach { symbol ->
             val annotation = symbol.annotations.first {
-                it.annotationType.resolve().toClassName() == Screen::class.asTypeName()
+                it.annotationType.resolve().toClassName() == ScreenRegistry::class.asTypeName()
             }
-            val direction = annotation.arguments.first { it.name?.getShortName() == Screen::direction.name }.value as KSType
+            val direction = annotation.arguments.first { it.name?.getShortName() == ScreenRegistry::direction.name }.value as KSType
 
             val directionName = direction.toClassName().canonicalName
             val screenName = requireNotNull(symbol.qualifiedName).asString()
