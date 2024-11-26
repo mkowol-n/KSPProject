@@ -12,10 +12,8 @@ import pl.nepapp.ksp.annotations.ScreenRegistry
 import kotlin.reflect.KType
 
 @Serializable
-class SecondScreenDirection: Direction {
-    companion object: DirectionTypeMapCompanion {
-        override val typeMap: Map<KType, NavType<Any>> = emptyMap()
-    }
+data object SecondScreenDirection: Direction {
+    val typeMap: Map<KType, NavType<Any>> = emptyMap()
 }
 
 @ScreenRegistry(SecondScreenDirection::class)

@@ -7,6 +7,7 @@ import com.google.devtools.ksp.processing.Resolver
 import com.google.devtools.ksp.processing.SymbolProcessor
 import com.google.devtools.ksp.processing.SymbolProcessorEnvironment
 import com.google.devtools.ksp.processing.SymbolProcessorProvider
+import com.google.devtools.ksp.symbol.ClassKind
 import com.google.devtools.ksp.symbol.KSAnnotated
 import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.devtools.ksp.symbol.KSFunctionDeclaration
@@ -42,6 +43,7 @@ class NavigationProcessorProcessor(
     private val directionTypeMapCompanionClassName = ClassName("pl.nepapp.kspproject", "DirectionTypeMapCompanion") // Tu wrzucasz to co mam w direction jaok DirectionTypeMapCompanion
     private val generatedModulePackageName = "pl.nepapp.kspproject" // twój app module package name
     private val nameOfNavigationComposable = "GeneratedNavHost" // to jak ma sie nazywac wygenerowany plik
+    private val typeMapName = "typeMap"
 
     override fun process(resolver: Resolver): List<KSAnnotated> {
         val symbols = resolver.getSymbolsWithAnnotation(ScreenRegistry::class.qualifiedName!!)
@@ -87,19 +89,10 @@ class NavigationProcessorProcessor(
 
             funSpecBuilder.addCode("%M<$directionName>", baseComposableRegistrator)
 
-            val direcionCompanionObject =
-                (direction.declaration as KSClassDeclaration).declarations.filterIsInstance<KSClassDeclaration>()
-                    .firstOrNull { it.isCompanionObject }
-            if (direcionCompanionObject != null) {
-
-                if (direcionCompanionObject.superTypes.none { it.resolve().toClassName() == directionTypeMapCompanionClassName }) {
-                    throw Exception("Companion object of $directionName must be type of ${directionTypeMapCompanionClassName.canonicalName}")
-                }
-
-                val typeMapName = direcionCompanionObject.getDeclaredProperties().first()
-
-                funSpecBuilder.addCode("(typeMap = ${directionName}.$typeMapName )")
-            }
+            funSpecBuilder.addNavTypesIfNeeded(
+                direction = direction,
+                directionName = directionName
+            )
 
             funSpecBuilder.addCode("{\n")
             funSpecBuilder.addCode("$screenName()\n")
@@ -109,5 +102,23 @@ class NavigationProcessorProcessor(
         funSpecBuilder.addCode("}\n")
 
         return funSpecBuilder.build()
+    }
+
+    private fun FunSpec.Builder.addNavTypesIfNeeded(direction: KSType, directionName: String): FunSpec.Builder {
+
+        val direcionCompanionObject = (direction.declaration as KSClassDeclaration).declarations.filterIsInstance<KSClassDeclaration>().firstOrNull { it.isCompanionObject }
+        if(direcionCompanionObject == null) {
+            return this
+        }
+
+        if (direcionCompanionObject.superTypes.none { it.resolve().toClassName() == directionTypeMapCompanionClassName }) {
+            throw Exception("Companion object of $directionName must be type of ${directionTypeMapCompanionClassName.canonicalName}")
+        }
+
+        val typeMapName = direcionCompanionObject.getDeclaredProperties().first()
+
+        this.addCode("(typeMap = ${directionName}.$typeMapName )")
+
+        return this
     }
 }

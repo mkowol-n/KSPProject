@@ -20,6 +20,6 @@ data object FirstScreenDirection: Direction
 fun FirstContent() {
     val navigator = LocalNavigator.current
     Box(modifier = Modifier.clickable {
-        navigator?.push(SecondScreenDirection())
+        navigator?.push(SecondScreenDirection)
     }.background(Color.Gray).fillMaxSize()) {}
 }
