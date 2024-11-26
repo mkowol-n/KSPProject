@@ -2,20 +2,18 @@ package pl.nepapp.ksp.processor
 
 import com.google.devtools.ksp.processing.CodeGenerator
 import com.google.devtools.ksp.processing.Dependencies
-import com.google.devtools.ksp.processing.KSPLogger
 import com.google.devtools.ksp.processing.Resolver
 import com.google.devtools.ksp.processing.SymbolProcessor
 import com.google.devtools.ksp.processing.SymbolProcessorEnvironment
 import com.google.devtools.ksp.processing.SymbolProcessorProvider
 import com.google.devtools.ksp.symbol.KSAnnotated
-import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.devtools.ksp.symbol.KSFunctionDeclaration
 import com.google.devtools.ksp.symbol.KSType
-import com.squareup.kotlinpoet.ANY
-import com.squareup.kotlinpoet.BOOLEAN
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.FunSpec
+import com.squareup.kotlinpoet.MemberName
+import com.squareup.kotlinpoet.NOTHING
 import com.squareup.kotlinpoet.ParameterSpec
 import com.squareup.kotlinpoet.ksp.toClassName
 import com.squareup.kotlinpoet.ksp.writeTo
@@ -25,21 +23,20 @@ class NavigationProcessorProvider : SymbolProcessorProvider {
     override fun create(environment: SymbolProcessorEnvironment): SymbolProcessor {
         return NavigationProcessorProcessor(
             environment.codeGenerator,
-            environment.logger,
-            options = environment.options
         )
     }
 }
 
-private var processed: Boolean = false
-
 class NavigationProcessorProcessor(
     private val codeGenerator: CodeGenerator,
-    private val logger: KSPLogger,
-    private val options: Map<String, String>
 ) : SymbolProcessor {
+    private val composableAnnotationClassName = ClassName("androidx.compose.runtime", "Composable")
+    private val rememberNavControllerMemberName = MemberName("androidx.navigation.compose", "rememberNavController")
+    private val navHostControllerClassName = ClassName("androidx.navigation", "NavHostController")
+    private val asdfas = FunSpec.builder("rememberNavController")
 
-    private val myScreenQualifiedName = "pl.nepapp.coreui.test.MyScreen"
+    private val directionClassName = ClassName("pl.nepapp.kspproject", "Direction")  // Tu wrzucasz package swojego direction interface
+    private val baseNavHostClassName =  ClassName("pl.nepapp.kspproject", "BaseNavHost")  // Tu wrzucasz package BaseNavHosta
 
     override fun process(resolver: Resolver): List<KSAnnotated> {
         val symbols = resolver.getSymbolsWithAnnotation(Screen::class.qualifiedName!!)
@@ -59,15 +56,14 @@ class NavigationProcessorProcessor(
 
     private fun generateNavHostFunction(symbols: Sequence<KSFunctionDeclaration>): FunSpec {
         val funSpecBuilder = FunSpec.builder("NavigationGraph")
-            .addAnnotation(ClassName("androidx.compose.runtime", "Composable"))
-            .addParameter("initialScreen", ClassName("pl.nepapp.kspproject", "Direction"))
+            .addAnnotation(composableAnnotationClassName)
+            .addParameter("initialScreen", directionClassName)
             .addParameter(
-            //    "%T", ClassName("androidx.navigation", "NavHostController")
-                ParameterSpec.builder("navHostController", ClassName("androidx.navigation", "NavHostController"))
-                    .defaultValue("%T()", ClassName("androidx.navigation.compose", "rememberNavController"))
+                ParameterSpec.builder("navHostController", navHostControllerClassName)
+                    .defaultValue("%M()", rememberNavControllerMemberName)
                     .build()
             )
-            .addCode("return %T(\n", ClassName("pl.nepapp.kspproject", "BaseNavHost"))
+            .addCode("return %T(\n", baseNavHostClassName)
             .addCode("startDestination = initialScreen,\n")
             .addCode("navController = navHostController\n")
             .addCode(") {\n")
