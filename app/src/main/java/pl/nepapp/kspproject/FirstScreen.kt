@@ -15,7 +15,7 @@ import kotlin.reflect.KType
 @Serializable
 data object FirstScreenDirection: Direction
 
-@ScreenRegistry(FirstScreenDirection::class)
+@ScreenRegistry(FirstScreenDirection::class, animation = [SomeCustomAnimation2::class])
 @Composable
 fun FirstContent() {
     val navigator = LocalNavigator.current

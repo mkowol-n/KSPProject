@@ -1,6 +1,8 @@
 package pl.nepapp.kspproject
 
 import androidx.compose.animation.AnimatedContentScope
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.runtime.Composable
@@ -38,10 +40,26 @@ object SomeCustomAnimation {
         noinline content: @Composable AnimatedContentScope.(NavBackStackEntry) -> Unit
     ) {
         composable<T>(
-            enterTransition = { slideInHorizontally() },
-            exitTransition = { slideOutHorizontally() },
-            popExitTransition = { slideOutHorizontally() },
-            popEnterTransition = { slideInHorizontally() },
+            enterTransition = { fadeIn() },
+            exitTransition = { fadeOut() },
+            popExitTransition = { fadeOut() },
+            popEnterTransition = { fadeIn() },
+            content = content,
+            typeMap = typeMap
+        )
+    }
+}
+
+object SomeCustomAnimation2 {
+    inline fun <reified T : Direction> NavGraphBuilder.registerComosable(
+        typeMap: Map<KType, @JvmSuppressWildcards NavType<*>> = emptyMap(),
+        noinline content: @Composable AnimatedContentScope.(NavBackStackEntry) -> Unit
+    ) {
+        composable<T>(
+            enterTransition = { fadeIn() },
+            exitTransition = { fadeOut() },
+            popExitTransition = { fadeOut() },
+            popEnterTransition = { fadeIn() },
             content = content,
             typeMap = typeMap
         )
