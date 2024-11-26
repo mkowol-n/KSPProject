@@ -33,7 +33,6 @@ class NavigationProcessorProcessor(
     private val composableAnnotationClassName = ClassName("androidx.compose.runtime", "Composable")
     private val rememberNavControllerMemberName = MemberName("androidx.navigation.compose", "rememberNavController")
     private val navHostControllerClassName = ClassName("androidx.navigation", "NavHostController")
-    private val asdfas = FunSpec.builder("rememberNavController")
 
     private val directionClassName = ClassName("pl.nepapp.kspproject", "Direction")  // Tu wrzucasz package swojego direction interface
     private val baseNavHostClassName =  ClassName("pl.nepapp.kspproject", "BaseNavHost")  // Tu wrzucasz package BaseNavHosta
