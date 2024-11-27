@@ -7,25 +7,27 @@ import com.google.devtools.ksp.processing.Resolver
 import com.google.devtools.ksp.processing.SymbolProcessor
 import com.google.devtools.ksp.processing.SymbolProcessorEnvironment
 import com.google.devtools.ksp.processing.SymbolProcessorProvider
-import com.google.devtools.ksp.symbol.ClassKind
 import com.google.devtools.ksp.symbol.KSAnnotated
 import com.google.devtools.ksp.symbol.KSAnnotation
 import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.devtools.ksp.symbol.KSFunctionDeclaration
 import com.google.devtools.ksp.symbol.KSType
+import com.google.devtools.ksp.symbol.Modifier
+import com.squareup.kotlinpoet.AnnotationSpec
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.FunSpec
+import com.squareup.kotlinpoet.KModifier
 import com.squareup.kotlinpoet.MemberName
 import com.squareup.kotlinpoet.ParameterSpec
+import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
+import com.squareup.kotlinpoet.PropertySpec
+import com.squareup.kotlinpoet.STAR
 import com.squareup.kotlinpoet.asClassName
 import com.squareup.kotlinpoet.asTypeName
 import com.squareup.kotlinpoet.ksp.toClassName
-import com.squareup.kotlinpoet.ksp.toTypeName
 import com.squareup.kotlinpoet.ksp.writeTo
 import pl.nepapp.ksp.annotations.ScreenRegistry
-import kotlin.reflect.KClass
-import kotlin.reflect.typeOf
 
 class NavigationProcessorProvider : SymbolProcessorProvider {
     override fun create(environment: SymbolProcessorEnvironment): SymbolProcessor {
@@ -35,19 +37,45 @@ class NavigationProcessorProvider : SymbolProcessorProvider {
     }
 }
 
+//Map<KType, @JvmSuppressWildcards NavType<*>>
 class NavigationProcessorProcessor(
     private val codeGenerator: CodeGenerator,
 ) : SymbolProcessor {
     private val composableAnnotationClassName = ClassName("androidx.compose.runtime", "Composable")
-    private val rememberNavControllerMemberName = MemberName("androidx.navigation.compose", "rememberNavController")
+    private val rememberNavControllerMemberName =
+        MemberName("androidx.navigation.compose", "rememberNavController")
     private val navHostControllerClassName = ClassName("androidx.navigation", "NavHostController")
+    private val typeOfMemberName = MemberName("kotlin.reflect", "typeOf")
+    private val serializableTypeMemberName = MemberName("pl.nepapp.kspproject", "serializableType")
+    private val navigationSavedStateHandleClassName =
+        ClassName("pl.nepapp.kspproject", "NavigationSavedStateHandle")
 
-    private val directionClassName = ClassName("pl.nepapp.kspproject", "Direction")  // Tu wrzucasz package swojego direction interface
-    private val baseNavHostClassName = ClassName("pl.nepapp.kspproject", "BaseNavHost")  // Tu wrzucasz package BaseNavHosta
-    private val baseComposableRegistrator = MemberName("pl.nepapp.kspproject", "registerBaseComposable")  // Tu wrzucasz i name swojej głównej nawigacji compose
-    private val directionTypeMapCompanionClassName = ClassName("pl.nepapp.kspproject", "DirectionTypeMapCompanion") // Tu wrzucasz to co mam w direction jaok DirectionTypeMapCompanion
+    private val directionClassName = ClassName(
+        "pl.nepapp.kspproject",
+        "Direction"
+    )  // Tu wrzucasz package swojego direction interface
+    private val baseNavHostClassName =
+        ClassName("pl.nepapp.kspproject", "BaseNavHost")  // Tu wrzucasz package BaseNavHosta
+    private val baseComposableRegistrator = MemberName(
+        "pl.nepapp.kspproject",
+        "registerBaseComposable"
+    )  // Tu wrzucasz i name swojej głównej nawigacji compose
+    private val directionTypeMapCompanionClassName = ClassName(
+        "pl.nepapp.kspproject",
+        "DirectionTypeMapCompanion"
+    ) // Tu wrzucasz to co mam w direction jaok DirectionTypeMapCompanion
     private val generatedModulePackageName = "pl.nepapp.kspproject" // twój app module package name
-    private val nameOfNavigationComposable = "GeneratedNavHost" // to jak ma sie nazywac wygenerowany plik
+    private val nameOfNavigationComposable =
+        "GeneratedNavHost" // to jak ma sie nazywac wygenerowany plik
+
+    val navTypeClassName = ClassName("androidx.navigation", "NavType")
+    val kTypeClassName = ClassName("kotlin.reflect", "KType")
+
+    val mapType = Map::class.asClassName().parameterizedBy(
+        kTypeClassName,
+        navTypeClassName.parameterizedBy(STAR)
+            .copy(annotations = listOf(AnnotationSpec.builder(JvmSuppressWildcards::class).build()))
+    )
 
     override fun process(resolver: Resolver): List<KSAnnotated> {
         val symbols = resolver.getSymbolsWithAnnotation(ScreenRegistry::class.qualifiedName!!)
@@ -98,7 +126,8 @@ class NavigationProcessorProcessor(
 
             funSpecBuilder.addNavTypesIfNeeded(
                 direction = direction,
-                directionName = directionName
+                directionName = directionName,
+                codeGenerator = codeGenerator
             )
 
             funSpecBuilder.addCode("{\n")
@@ -113,26 +142,53 @@ class NavigationProcessorProcessor(
 
     private fun FunSpec.Builder.addNavTypesIfNeeded(
         direction: KSType,
-        directionName: String
+        directionName: String,
+        codeGenerator: CodeGenerator
     ): FunSpec.Builder {
 
-        val direcionCompanionObject =
-            (direction.declaration as KSClassDeclaration).declarations.filterIsInstance<KSClassDeclaration>()
-                .firstOrNull { it.isCompanionObject }
-        if (direcionCompanionObject == null) {
+        val listOfObjects = mutableListOf<KSType>()
+        (direction.declaration as KSClassDeclaration).getAllProperties().forEach { field ->
+            if (isDataClass(field.type.resolve())) {
+                listOfObjects.add(field.type.resolve())
+            }
+        }
+
+
+        if (listOfObjects.isEmpty()) {
             return this
         }
 
-        if (direcionCompanionObject!!.superTypes.none {
-                it.resolve().toClassName() == directionTypeMapCompanionClassName
-            }) {
-            throw Exception("Companion object of $directionName must be type of ${directionTypeMapCompanionClassName.canonicalName}")
-        }
+        val mapItems = listOfObjects.joinToString("", transform = ::getReturnNavTypeStatement)
 
-        val typeMapName = direcionCompanionObject.getDeclaredProperties().first()
 
-        this.addCode("(typeMap = ${directionName}.$typeMapName )")
+        FileSpec.builder(generatedModulePackageName, "${directionName}Extension")
+            .addProperty(
+                PropertySpec.builder("navType", mapType)
+                    .receiver(direction.toClassName().nestedClass("Companion"))
+                    .getter(
+                        FunSpec.getterBuilder()
+                            .addStatement("return mapOf ( $mapItems )")
+                            .build()
+                    )
+                    .build()
+            )
 
+            .addFunction(
+                FunSpec.builder("getDirection")
+                    .receiver(direction.toClassName().nestedClass("Companion"))
+                    .addParameter(
+                        ParameterSpec.builder(
+                            "navigationSavedStateHandle", navigationSavedStateHandleClassName
+                        ).build()
+                    )
+                    .returns(direction.toClassName())
+                    .addStatement("return navigationSavedStateHandle.getDirection(${direction.toClassName().canonicalName}::class, ${direction.toClassName().canonicalName}.navType)")
+                    .build()
+            )
+            .build().writeTo(codeGenerator, Dependencies(false))
+
+
+        this.addCode("(typeMap = ${directionName}.navType )")
         return this
     }
 
@@ -143,7 +199,7 @@ class NavigationProcessorProcessor(
         val screenRegistry =
             annotation.arguments.first { it.name?.getShortName() == ScreenRegistry::animation.name }.value
 
-        if(screenRegistry !is ArrayList<*>) {
+        if (screenRegistry !is ArrayList<*>) {
 
             throw Exception("Missed type of animation in ${ScreenRegistry::class.qualifiedName}")
         }
@@ -152,16 +208,29 @@ class NavigationProcessorProcessor(
             return this
         }
 
-        if(screenRegistry.size > 1) {
+        if (screenRegistry.size > 1) {
             throw Exception("Only one custom animation allowed")
         }
 
         val ksType = (screenRegistry.first() as KSType)
         val classDeclaration = ksType.declaration as KSClassDeclaration
 
-        val memberName = MemberName(ksType.toClassName(), classDeclaration.getAllFunctions().first().simpleName.getShortName())
+        val memberName = MemberName(
+            ksType.toClassName(),
+            classDeclaration.getAllFunctions().first().simpleName.getShortName()
+        )
 
         this.addCode("%M<$directionName>", memberName)
         return this
+    }
+
+    private fun isDataClass(type: KSType): Boolean {
+        val declaration = type.declaration
+        return declaration is KSClassDeclaration && declaration.modifiers.contains(Modifier.DATA)
+    }
+
+    private fun getReturnNavTypeStatement(kClass: KSType): String {
+        val name = kClass.toClassName().canonicalName
+        return "${typeOfMemberName.canonicalName}<${name}>() to ${serializableTypeMemberName.canonicalName}<${name}>(),"
     }
 }

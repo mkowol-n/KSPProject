@@ -20,13 +20,7 @@ data class SomeClass(
 @Serializable
 data class SecondScreenDirection(
     val test: SomeClass
-) : Direction {
-
-    companion object : DirectionTypeMapCompanion {
-        override val typeMap: Map<KType, NavType<out Any>> =
-            mapOf(typeOf<SomeClass>() to serializableType<SomeClass>())
-    }
-}
+) : Direction
 
 @ScreenRegistry(SecondScreenDirection::class, animation = [SomeCustomAnimation::class])
 @Composable
