@@ -18,8 +18,17 @@ data class SomeClass(
 )
 
 @Serializable
+data class SomeClassAyako(
+    val someString: String
+)
+
+@Serializable
 data class SecondScreenDirection(
-    val test: SomeClass
+    val test: SomeClass,
+    val ayako: SomeClassAyako,
+    val ayako2: SomeClassAyako,
+    val ayako3: SomeClassAyako,
+    val test23: String = "saf"
 ) : Direction
 
 @ScreenRegistry(SecondScreenDirection::class, animation = [SomeCustomAnimation::class])

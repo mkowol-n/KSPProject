@@ -148,8 +148,9 @@ class NavigationProcessorProcessor(
 
         val listOfObjects = mutableListOf<KSType>()
         (direction.declaration as KSClassDeclaration).getAllProperties().forEach { field ->
-            if (isDataClass(field.type.resolve())) {
-                listOfObjects.add(field.type.resolve())
+            val fieldResolver = field.type.resolve()
+            if (isDataClass(fieldResolver) && listOfObjects.none { it.toClassName().canonicalName == fieldResolver.toClassName().canonicalName  } ) {
+                listOfObjects.add(fieldResolver)
             }
         }
 
