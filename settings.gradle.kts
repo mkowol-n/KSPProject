@@ -21,6 +21,5 @@ dependencyResolutionManagement {
 
 rootProject.name = "KSPProject"
 include(":app")
-include(":ksp")
 include(":ksp:annotations")
 include(":ksp:processor")
