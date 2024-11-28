@@ -47,11 +47,11 @@ class NavigationProcessorProcessor(
     private val kTypeClassName = ClassName("kotlin.reflect", "KType")
     private val mapType = Map::class.asClassName().parameterizedBy(kTypeClassName, navTypeClassName.parameterizedBy(STAR).copy(annotations = listOf(AnnotationSpec.builder(JvmSuppressWildcards::class).build())))
 
-    private val directionClassName = ClassName("pl.nepapp.kspproject", "Direction")  // Tu wrzucasz package swojego direction interface
-    private val baseNavHostClassName = ClassName("pl.nepapp.kspproject", "BaseNavHost")  // Tu wrzucasz package BaseNavHosta
-    private val baseComposableRegistrator = MemberName("pl.nepapp.kspproject", "registerBaseComposable")  // Tu wrzucasz i name swojej głównej nawigacji compose
+    private val directionClassName = ClassName("pl.nepapp.kspproject", "Direction")
+    private val baseNavHostClassName = ClassName("pl.nepapp.kspproject", "BaseNavHost")
+    private val baseComposableRegistrator = MemberName("pl.nepapp.kspproject", "registerBaseComposable")
     private val navigationSavedStateHandleClassName = ClassName("pl.nepapp.kspproject", "NavigationSavedStateHandle")
-    private val nameOfGeneratedFile = "NavigationGraph" // to jak ma sie nazywac wygenerowany plik
+    private val nameOfGeneratedFile = "NavigationGraph"
 
 
     override fun process(resolver: Resolver): List<KSAnnotated> {
