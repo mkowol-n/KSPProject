@@ -27,7 +27,6 @@ data class SecondScreenDirection(
     val test: SomeClass,
     val ayako: SomeClassAyako,
     val ayako2: SomeClassAyako,
-    val ayako3: SomeClassAyako,
     val test23: String = "saf"
 ) : Direction
 
