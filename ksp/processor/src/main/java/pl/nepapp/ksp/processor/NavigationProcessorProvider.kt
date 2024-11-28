@@ -66,7 +66,9 @@ class NavigationProcessorProcessor(
         fileSpecBuilder.addFunction(generateNavHostFunction(symbols))
 
         val fileSpec = fileSpecBuilder.build()
-        fileSpec.writeTo(codeGenerator, Dependencies(false))
+        val sourceFiles = symbols.mapNotNull { it.containingFile }.distinct().toList()
+
+        fileSpec.writeTo(codeGenerator, Dependencies(false, sources = sourceFiles.toTypedArray()))
 
         return emptyList()
     }
@@ -121,6 +123,7 @@ class NavigationProcessorProcessor(
         directionClassName: ClassName,
         codeGenerator: CodeGenerator
     ): FunSpec.Builder {
+        val sourceFiles = (directionKSType.declaration as KSClassDeclaration).containingFile?.let { listOf(it) } ?: emptyList()
         val listOfObjects = mutableListOf<ClassName>()
         val fileName = directionClassName.simpleName + "Extension"
 
@@ -140,7 +143,7 @@ class NavigationProcessorProcessor(
             "${typeOfMemberName.canonicalName}<${name}>() to ${serializableTypeMemberName.canonicalName}<${name}>(),"
         })
 
-        FileSpec.builder(directionClassName.packageName, fileName)
+        val extensionFile = FileSpec.builder(directionClassName.packageName, fileName)
             .addProperty(
                 PropertySpec.builder("navType", mapType)
                     .receiver(directionClassName.nestedClass("Companion"))
@@ -164,7 +167,9 @@ class NavigationProcessorProcessor(
                     .addStatement("return navigationSavedStateHandle.getDirection(${directionClassName.canonicalName}::class, ${directionClassName.canonicalName}.navType)")
                     .build()
             )
-            .build().writeTo(codeGenerator, Dependencies(false))
+            .build()
+
+        extensionFile.writeTo(codeGenerator, Dependencies(false, sources = sourceFiles.toTypedArray()))
 
         this.addCode("(typeMap = ${directionClassName.canonicalName}.navType )")
         return this

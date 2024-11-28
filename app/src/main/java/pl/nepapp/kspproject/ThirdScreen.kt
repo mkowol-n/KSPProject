@@ -6,31 +6,19 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.navigation.NavType
 import kotlinx.serialization.Serializable
 import pl.nepapp.ksp.annotations.ScreenRegistry
-import kotlin.reflect.KType
-import kotlin.reflect.typeOf
 
 @Serializable
-data class SomeClass(
-    val someString: String
-)
-
-@Serializable
-data class SomeClassAyako(
-    val someString: String
-)
-
-@Serializable
-data class SecondScreenDirection(
+data class Test(
     val test: SomeClass,
-    val test23: String = "saf"
+    val ayako: SomeClassAyako,
+    val ayako2: SomeClassAyako,
 ) : Direction
 
-@ScreenRegistry(SecondScreenDirection::class, animation = [SomeCustomAnimation::class])
+@ScreenRegistry(Test::class, animation = [SomeCustomAnimation::class])
 @Composable
-fun SecondScreen() {
+fun ThirdScreen() {
     Box(
         modifier = Modifier
             .background(Color.Red)
