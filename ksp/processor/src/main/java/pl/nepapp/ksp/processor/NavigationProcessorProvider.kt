@@ -7,7 +7,6 @@ import com.google.devtools.ksp.processing.SymbolProcessor
 import com.google.devtools.ksp.processing.SymbolProcessorEnvironment
 import com.google.devtools.ksp.processing.SymbolProcessorProvider
 import com.google.devtools.ksp.symbol.KSAnnotated
-import com.google.devtools.ksp.symbol.KSAnnotation
 import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.devtools.ksp.symbol.KSFunctionDeclaration
 import com.google.devtools.ksp.symbol.KSType
@@ -49,7 +48,7 @@ class NavigationProcessorProcessor(
 
     private val directionClassName = ClassName("pl.nepapp.kspproject", "Direction")
     private val baseNavHostClassName = ClassName("pl.nepapp.kspproject", "BaseNavHost")
-    private val baseComposableRegistrator = MemberName("pl.nepapp.kspproject", "registerBaseComposable")
+    private val baseNavHostComposableScreen = MemberName("pl.nepapp.kspproject", "registerBaseComposable")
     private val navigationSavedStateHandleClassName = ClassName("pl.nepapp.kspproject", "NavigationSavedStateHandle")
     private val nameOfGeneratedFile = "NavigationGraph"
 
@@ -180,7 +179,7 @@ class NavigationProcessorProcessor(
             throw Exception("Missed type of animation in ${ScreenRegistry::class.qualifiedName}")
         }
         if (animationValue.isEmpty()) {
-            this.addCode("%M<$directionName>", baseComposableRegistrator)
+            this.addCode("%M<$directionName>", baseNavHostComposableScreen)
             return this
         }
 
